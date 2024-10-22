@@ -48,10 +48,10 @@ not include those files, i.e., there is no `jmods` directory.
 The resulting JDK is approximately 25% smaller than a JDK built with the default
 configuration, and it contains exactly the same modules.
 
-The `jlink` tool in the resulting JDK works exactly the same way as the `jlink`
-tool in a JDK built with the default configuration. For example, to create a
-run-time image containing only the `java.xml` and `java.base` modules, the
-`jlink` invocation is the same:
+Running the `jlink` tool in the resulting JDK works exactly the same way as the
+`jlink` tool in a JDK built with the default configuration. For example, to
+create a run-time image containing only the `java.xml` and `java.base` modules,
+the `jlink` invocation is the same:
 
     $ jlink --add-modules java.xml --output image
     $ image/bin/java --list-modules
@@ -78,6 +78,27 @@ The `jlink` tool copies the class files and resources for the `app` and `lib`
 modules from the modular JAR files `app.jar` and `lib.jar`. It extracts the
 class files, native libraries, configuration files, and other resources for the
 JDK's modules from the JDK's run-time image.
+
+`jlink`'s `--verbose` option has been enhanced to show whether or not a link
+from the run-time image or from the module path is being performed for a
+specific module:
+
+    $ jlink --add-modules foo \
+            --module-path=custom-jmods \
+            --verbose \
+            --output foo-image
+    Linking based on the current run-time image.
+    java.base jrt:/java.base (run-time image)
+    foo file:///path/to/custom-jmods/foo.jmod
+
+    Providers:
+      java.base provides java.nio.file.spi.FileSystemProvider used by java.base
+      java.base provides java.util.random.RandomGenerator used by java.base
+
+In the above example, module `foo` is being taken from `foo.jmod` and
+`java.base` from the current run-time image. Note that if the `java.base`
+module is being found on the module path, the JMOD of `java.base` from that
+module path will be preferred over the current run-time image's `java.base`.
 
 
 ### Not enabled by default
