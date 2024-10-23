@@ -86,11 +86,12 @@ need to be specified to `jlink` with the `--module-path` option.
 The user experience of running `jlink` with the new capability remains
 _exactly_ the same as the one of running `jlink` in a JDK built with the
 default configuration. Say, we wanted to further reduce the size of the
-run-time image by removing some modules we can continue to do so by only
-including the modules we need. For example, to create a run-time image that
-only contains the `java.xml` and `java.base` modules, the `jlink` invocation is
-the same. Such a run-time image has an approximate 60% size reduction as
-compared to the run-time image with all JDK modules included:
+run-time image by removing some modules, we can continue to do so by only
+including the modules we need, yet JMODs won't be needed. For example, to
+create a run-time image that only contains the `java.xml` and `java.base`
+modules, the `jlink` invocation is the same. Such a run-time image has an
+approximate 60% size reduction as compared to the run-time image with all JDK
+modules included:
 
     $ jlink --add-modules java.xml --output image
     $ image/bin/java --list-modules
