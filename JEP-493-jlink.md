@@ -75,7 +75,8 @@ is built in:
     Capabilities: +run-time-image
 
 Capability `+run-time-image` indicates that the `jlink` tool in use supports
-linking JDK modules from the run-time image.
+linking JDK modules from the run-time image. `-run-time-image` means there is
+no such support built in.
 
 A version of `jlink` _with_ the new capability, however, always prefers
 consuming JDK modules from JMOD files on the module path if available. Only if
