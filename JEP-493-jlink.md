@@ -6,6 +6,19 @@ create custom run-time images without using the JDK's JMOD files. This feature
 must be enabled when the JDK is built; it will not be enabled by default, and
 some JDK vendors may choose not to enable it.
 
+Goals
+-----
+
+Allow users to link a run-time image from modules on their machine without
+regard for whether those modules exist as standalone [JMOD files](https://openjdk.org/jeps/261#Packaging:-JMOD-files),
+[modular JAR files](https://docs.oracle.com/en/java/javase/23/docs/specs/jar/jar.html#modular-jar-files)
+or exist in a run-time image linked previously.
+
+Non-Goals
+---------
+
+Enhance `jlink` to be able to consume run-time images with the `--module-path`
+option.
 
 Motivation
 ----------
@@ -48,10 +61,36 @@ not include those files, i.e., there is no `jmods` directory.
 The resulting JDK is approximately 25% smaller than a JDK built with the default
 configuration, and it contains exactly the same modules.
 
-Running the `jlink` tool in the resulting JDK works exactly the same way as the
-`jlink` tool in a JDK built with the default configuration. For example, to
-create a run-time image containing only the `java.xml` and `java.base` modules,
-the `jlink` invocation is the same:
+Every `jlink` in every JDK build can consume JMOD files and modular JAR files.
+In addition, in JDK builds with this feature enabled, `jlink` can consume
+modules from the run-time image of which it is part. Whether jlink can do this
+depends on how its run-time image was built.
+
+The `--help` output of `jlink` shows the new capability of the tool if it
+is built in:
+
+    $ jlink --help
+    Usage: jlink <options> --module-path <modulepath> --add-modules <module>[,<module>...]
+    [...]
+    Capabilities: +run-time-image
+
+Capability `+run-time-image` indicates that the `jlink` tool in use supports
+linking JDK modules from the run-time image.
+
+A version of `jlink` _with_ the new capability, however, always prefers
+consuming JDK modules from JMOD files on the module path if available. Only if
+module `java.base` is not found on the module path does `jlink` consume the JDK
+modules from the run-time image of which `jlink` is part. Third-party modules
+need to be specified to `jlink` with the `--module-path` option.
+
+The user experience of running `jlink` with the new capability remains
+_exactly_ the same as the one of running `jlink` in a JDK built with the
+default configuration. Say, we wanted to further reduce the size of the
+run-time image by removing some modules we can continue to do so by only
+including the modules we need. For example, to create a run-time image that
+only contains the `java.xml` and `java.base` modules, the `jlink` invocation is
+the same. Such a run-time image has an approximate 60% size reduction as
+compared to the run-time image with all JDK modules included:
 
     $ jlink --add-modules java.xml --output image
     $ image/bin/java --list-modules
@@ -59,10 +98,13 @@ the `jlink` invocation is the same:
     java.xml@24
     $ 
 
-The invocations for more complex cases are also the same. For example, suppose
+The output of `jlink` is _exactly_ the same as if modules were linked from
+JMODs.
+
+Invocations for more complex cases are also the same. For example, suppose
 we want to create a run-time image containing an application module `app` which
 requires a library `lib`. These modules are packaged as [modular JAR files](https://docs.oracle.com/en/java/javase/23/docs/specs/jar/jar.html#modular-jar-files) 
-in an `mlib` directory. We specify them to `jlink` via the `--module-path`
+in an `mlib` directory. We specify them to `jlink` with the `--module-path`
 option, as usual:
 
     $ ls mlib
@@ -79,10 +121,11 @@ modules from the modular JAR files `app.jar` and `lib.jar`. It extracts the
 class files, native libraries, configuration files, and other resources for the
 JDK's modules from the JDK's run-time image.
 
-`jlink`'s `--verbose` option has been enhanced to show whether or not a link
-from the run-time image or from the module path is being performed for a
-specific module:
+In order to be able to see where modules are being taken from, the `--verbose`
+option of `jlink` is enhanced to show the details:
 
+    $ ls custom-jmods
+    foo.jmod
     $ jlink --add-modules foo \
             --module-path=custom-jmods \
             --verbose \
@@ -93,12 +136,9 @@ specific module:
 
     Providers:
       java.base provides java.nio.file.spi.FileSystemProvider used by java.base
-      java.base provides java.util.random.RandomGenerator used by java.base
 
-In the above example, module `foo` is being taken from `foo.jmod` and
-`java.base` from the current run-time image. Note that if the `java.base`
-module is being found on the module path, the JMOD of `java.base` from that
-module path will be preferred over the current run-time image's `java.base`.
+In the above example, module `foo` is being taken from JMOD file `foo.jmod` and
+`java.base` from the current run-time image.
 
 
 ### Not enabled by default
