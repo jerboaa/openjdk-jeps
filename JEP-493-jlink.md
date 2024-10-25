@@ -189,6 +189,9 @@ limitations compared to that in a JDK built with the default configuration:
 - Cross-linking, e.g., running `jlink` on Linux/x64 to create a run-time image
   for Windows/x64, is not possible.
 
+- Linking from a run-time image that is itself using `--patch-module` is not
+  supported.
+
 
 Alternatives
 ----------
